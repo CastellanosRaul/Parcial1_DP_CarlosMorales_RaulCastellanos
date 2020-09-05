@@ -1,0 +1,252 @@
+---
+title: "Analisis de Academatica"
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+---
+
+```{r cache=TRUE, warning=FALSE, message=FALSE}
+library(RMySQL)
+library(DT)
+library(flexdashboard)
+library(dplyr)
+library(crosstalk)
+Academica <- dbConnect(MySQL(),
+                       user='MyRata',
+                       password='RataStudio%',
+                       dbname='Academica',
+                       host='localhost')
+Tablas <- dbListTables(Academica)
+
+metadata <- dbSendQuery(Academica, "select * from Metadata")
+Metadata <- fetch(metadata, n = -1)
+
+stats <- dbSendQuery(Academica, "select * from Stats")
+Stats <- fetch(stats, n = -1)
+
+videos <- dbSendQuery(Academica, "select * from Videos")
+Videos <- fetch(videos, n = -1)
+
+Videos <- Videos[-35,]
+Videos <- Videos[-855,]
+
+Metadata <- Metadata[,-1]
+Videos <- Videos[,-4]
+
+Videos$Fecha  <- substr(Videos$Pubish, 1, 10)
+Videos$Fecha <- as.Date.character(Videos$Fecha, format = "%Y-%m-%d")
+
+Metadata$Fecha <- Videos$Fecha
+Stats$Fecha <- Videos$Fecha
+
+Fecha0610 <- Stats[Stats$Fecha < "2011-01-01" & Stats$Fecha > "2006-01-01",]
+Fecha1115 <- Stats[Stats$Fecha < "2016-01-01" & Stats$Fecha > "2011-01-01",]
+Fecha1620 <- Stats[Stats$Fecha < "2021-01-01" & Stats$Fecha > "2016-01-01",]
+
+AcademiK <- cbind.data.frame(Metadata,Stats)
+AcademiK <- AcademiK[,-4]
+
+A1 <- AcademiK[AcademiK$Fecha < "2009-01-01" & Stats$Fecha > "2006-01-01",]
+A2 <- AcademiK[AcademiK$Fecha < "2012-01-01" & Stats$Fecha > "2009-01-01",]
+A3 <- AcademiK[AcademiK$Fecha < "2015-01-01" & Stats$Fecha > "2012-01-01",]
+A4 <- AcademiK[AcademiK$Fecha < "2018-01-01" & Stats$Fecha > "2015-01-01",]
+A5 <- AcademiK[AcademiK$Fecha < "2021-01-01" & Stats$Fecha > "2018-01-01",]
+```
+
+# Parcial 1 Data Product
+
+## {data-height = 200}
+
+###  Nombres {data-width=6}
+#### Carlos Morales 20180067
+#### Raúl Castellanos 20180052
+
+### Intruducción {data-width=6}
+Estos análisis están hechos con base a los datos proporcionados del canal Academatica. El objetivo del 
+análisis es observar el comportamiento de los usuarios del canal a lo largo del tiempo. 
+
+Para ello se muestran los datos de las estadísticas generales del canal, al igual que la respuesta de la comunidad hacia los videos a lo largo de los años.
+
+## {data-height = {600}
+
+### Programas Utilizados
+
+#### Docker 
+#### RStudio
+#### MySQLWorkbench
+
+### Nombre de los archivos Utilizados
+
+#### academatica_videos.csv
+#### academatica_videos_metadata.csv
+#### academatica_videos_stats.csv
+
+### Comentarios extra
+
+Esta página HTML fue hecha por medio de RStudio utilizando la librería de flexdashboards.
+Los datos utilizados son reales, proporcionados por el usuario propietario del canal Academatica 
+Carlos Zelada.
+
+# Data Academatica
+
+## 
+###
+```{r}
+DT::datatable(Metadata)
+```
+
+##
+```{r}
+DT::datatable(Stats)
+```
+
+# Estadisticas del Canal
+##
+###
+```{r}
+flexdashboard::valueBox(format(sum(Stats$Views), big.mark = ","),
+                        caption = "Total de views en el canal",
+                        color = "goldenrod")
+```
+
+###
+```{r}
+flexdashboard::valueBox(format(sum(Stats$Likes), big.mark = ","),
+                        caption = "Total de likes en el canal",
+                        color = "darkorange")
+```
+
+###
+```{r}
+flexdashboard::valueBox(format(sum(Stats$Comments), big.mark = ","),
+                        caption = "Total de comentarios en el canal",
+                        color = "dodgerblue")
+
+```
+
+##
+### Videos con más de 10,000 views en los años 2006 al 2010
+
+```{r cache=TRUE}
+flexdashboard::gauge(Fecha0610 %>% summarise(n = sum(Views>10000)) %>% pull(n), 
+                     min = 0, 
+                     max = nrow(Fecha0610),
+                     gaugeSectors(success = c(51,80), warning = c(26,50),
+                              danger = c(0,25))
+                     )
+```
+
+### Videos con más de 100 likes en los años 2006 al 2010
+```{r cache=TRUE}
+flexdashboard::gauge(Fecha0610 %>% summarise(n = sum(Likes>100)) %>% pull(n), 
+                     min = 0, 
+                     max = nrow(Fecha0610),
+                     gaugeSectors(success = c(51,80), warning = c(26,50),
+                              danger = c(0,25))
+                     )
+```
+
+###  Videos con más de 10 comentarios en los años 2006 al 2010
+```{r cache=TRUE}
+flexdashboard::gauge(Fecha0610 %>% summarise(n = sum(Comments>10)) %>% pull(n), 
+                     min = 0, 
+                     max = nrow(Fecha0610),
+                     gaugeSectors(success = c(51,80), warning = c(26,50),
+                              danger = c(0,25))
+                     )
+```
+
+##
+### Videos con más de 10,000 views en los años 2011 al 2015
+
+```{r cache=TRUE}
+flexdashboard::gauge(Fecha1115 %>% summarise(n = sum(Views>10000)) %>% pull(n), 
+                     min = 0, 
+                     max = nrow(Fecha1115),
+                     gaugeSectors(success = c(668,441), warning = c(440,221),
+                              danger = c(0,220))
+                     )
+```
+
+### Videos con más de 100 likes en los años 2011 al 2015
+```{r cache=TRUE}
+flexdashboard::gauge(Fecha1115 %>% summarise(n = sum(Likes>100)) %>% pull(n), 
+                     min = 0, 
+                     max = nrow(Fecha1115),
+                     gaugeSectors(success = c(668,441), warning = c(440,221),
+                              danger = c(0,220))
+                     )
+```
+
+### Videos con más de 10 comentarios en los años 2011 al 2015
+```{r cache=TRUE}
+flexdashboard::gauge(Fecha1115 %>% summarise(n = sum(Comments>10)) %>% pull(n), 
+                     min = 0, 
+                     max = nrow(Fecha1115),
+                     gaugeSectors(success = c(51,80), warning = c(26,50),
+                              danger = c(0,25))
+                     )
+
+```
+
+##
+### Videos con más de 10,000 views en los años 2016 al 2020
+
+```{r cache=TRUE}
+flexdashboard::gauge(Fecha1620 %>% summarise(n = sum(Views>10000)) %>% pull(n), 
+                     min = 0, 
+                     max = nrow(Fecha1620),
+                     gaugeSectors(success = c(71,111), warning = c(36,70),
+                              danger = c(0,35))
+                     )
+```
+
+### Videos con más de 100 likes en los años 2016 al 2020
+
+```{r cache=TRUE}
+flexdashboard::gauge(Fecha1620 %>% summarise(n = sum(Likes>100)) %>% pull(n), 
+                     min = 0, 
+                     max = nrow(Fecha1620),
+                     gaugeSectors(success = c(71,111), warning = c(36,70),
+                              danger = c(0,35))
+                     )
+```
+
+### Videos con más de 10 comentarios en los años 2016 al 2020
+
+```{r cache=TRUE}
+flexdashboard::gauge(Fecha1620 %>% summarise(n = sum(Comments>10)) %>% pull(n), 
+                     min = 0, 
+                     max = nrow(Fecha1620),
+                     gaugeSectors(success = c(71,111), warning = c(36,70),
+                              danger = c(0,35))
+                     )
+```
+
+# Datos Generales de los Videos 
+## {.tabset}
+### 2006 al 2008
+```{r}
+DT::datatable(A1)
+```
+
+### 2009 al 2011
+```{r}
+DT::datatable(A2)
+```
+
+### 2012 al 2014
+```{r}
+DT::datatable(A3)
+```
+
+### 2015 al 2017
+```{r}
+DT::datatable(A4)
+```
+
+### 2018 al 2020
+```{r}
+DT::datatable(A5)
+```
